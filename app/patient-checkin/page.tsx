@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Header } from '@/components/Header'
 import { Card } from '@/components/Card'
 import { contentWidthClass } from '@/lib/layout'
+import { CLINICAL_DISCLAIMER } from '@/lib/rules'
 
 type FormState = { pain: number; interference: number; sleep: number; steps: number; dn4: number; symptoms: string }
 
@@ -38,7 +39,7 @@ export default function PatientCheckIn() {
       <Header />
       <section className={`${contentWidthClass} py-5`}>
         <h1 className="text-xl font-bold text-slate-950 sm:text-2xl">Patient daily check-in</h1>
-        <p className="mt-1 text-sm font-medium text-slate-800">
+        <p className="mt-1 text-sm text-slate-700">
           Demo intake form for pain, sleep, activity, and neuropathic symptoms.
         </p>
 
@@ -54,7 +55,7 @@ export default function PatientCheckIn() {
               ] as const
             ).map(([key, label, min, max]) => (
               <label key={key} className="block">
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-sm text-slate-800">
                   {label}: {(form as Record<string, number>)[key]}
                 </span>
                 <input
@@ -68,9 +69,9 @@ export default function PatientCheckIn() {
               </label>
             ))}
             <label className="md:col-span-2">
-              <span className="text-sm font-semibold text-slate-800">Symptoms</span>
+              <span className="text-sm text-slate-800">Symptoms</span>
               <textarea
-                className="mt-1.5 w-full rounded-lg border border-slate-400 p-2.5 text-sm font-medium text-slate-950"
+                className="mt-1.5 w-full rounded-lg border border-slate-400 p-2.5 text-sm text-slate-950"
                 value={form.symptoms}
                 onChange={e => update('symptoms', e.target.value)}
               />
@@ -79,10 +80,10 @@ export default function PatientCheckIn() {
         </Card>
 
         <Card className="mt-4">
-          <h2 className="text-base font-bold text-slate-950">Computed triage preview</h2>
-          <div className="mt-2 text-2xl font-bold">{level} risk · {score}/100</div>
-          <p className="mt-1.5 text-sm font-medium text-slate-800">
-            This demo uses transparent rules. In a real pilot, the care team would review all flags before any action.
+          <h2 className="text-base font-bold text-slate-950">Organized signal preview</h2>
+          <div className="mt-2 text-2xl font-semibold">{level} risk · {score}/100</div>
+          <p className="mt-1.5 text-sm text-slate-700">
+            Demo intake form — responses organized for clinician review, not autonomous triage. {CLINICAL_DISCLAIMER}
           </p>
         </Card>
       </section>

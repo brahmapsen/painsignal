@@ -2,8 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'PainSignal Prototype',
-  description: 'Clinician-reviewed pain intelligence prototype',
+  title: 'PainSignal — Opioid Risk Intelligence',
+  description: 'Clinician decision support that organizes pain and opioid escalation signals for review',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

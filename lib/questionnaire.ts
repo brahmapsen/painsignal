@@ -69,7 +69,7 @@ export const QUESTIONS = [
   },
   {
     id: 'diabetesDiagnosis' as const,
-    text: 'Have you been diagnosed with diabetes or prediabetes?',
+    text: 'Has the patient been told they have diabetes or prediabetes?',
     type: 'yesno' as const,
   },
   {
@@ -169,7 +169,7 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
       question: 'Pain distribution',
       answer: 'Widespread',
       affects: 'Centralized/Fibromyalgia phenotype',
-      impact: 'Confirms centralized pattern',
+      impact: 'May support review of centralized pattern',
       points: 10,
     })
   }
@@ -179,7 +179,7 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
       question: 'Morning stiffness',
       answer: 'Yes',
       affects: 'Inflammatory phenotype',
-      impact: 'Confirms inflammatory symptoms',
+      impact: 'May support review of inflammatory symptoms',
       points: 10,
     })
   }
@@ -189,7 +189,7 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
       question: 'Joint swelling/warmth',
       answer: 'Yes',
       affects: 'Inflammatory phenotype',
-      impact: 'Confirms inflammatory symptoms',
+      impact: 'May support review of inflammatory symptoms',
       points: 10,
     })
   }
@@ -206,10 +206,10 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
 
   if (answers.diabetesDiagnosis) {
     rows.push({
-      question: 'Diabetes diagnosis',
+      question: 'Diabetes history',
       answer: 'Yes',
       affects: 'Metabolic/Neuropathic phenotype',
-      impact: 'Confirms metabolic driver',
+      impact: 'May support review of metabolic factors',
       points: 10,
     })
   }
@@ -219,7 +219,7 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
       question: 'Allodynia (touch sensitivity)',
       answer: 'Yes',
       affects: 'Centralized/Fibromyalgia phenotype',
-      impact: 'Confirms centralized sensitization',
+      impact: 'May support review of centralized sensitization',
       points: 10,
     })
   }
@@ -229,7 +229,7 @@ export function questionnaireContributions(answers: QuestionnaireAnswers): Quest
       question: 'Pain worse after poor sleep',
       answer: 'Yes',
       affects: 'Centralized/Fibromyalgia phenotype',
-      impact: 'Links sleep–pain loop',
+      impact: 'May be associated with sleep–pain pattern',
       points: 10,
     })
   }
@@ -244,7 +244,7 @@ export function questionnaireRiskAdjustment(answers: QuestionnaireAnswers): numb
 export function questionnaireSignals(answers: QuestionnaireAnswers): string[] {
   const signals: string[] = []
   if (answers.morningStiffness || answers.jointSwelling) {
-    signals.push('Questionnaire supports inflammatory symptom pattern')
+    signals.push('Questionnaire responses may be associated with inflammatory symptom pattern')
   }
   if (
     answers.painDistribution === 'widespread' ||
@@ -252,10 +252,10 @@ export function questionnaireSignals(answers: QuestionnaireAnswers): string[] {
     answers.painWorseWithPoorSleep ||
     answers.sleepRestfulness <= 5
   ) {
-    signals.push('Questionnaire supports centralized pain pattern')
+    signals.push('Questionnaire responses may be associated with centralized pain pattern')
   }
   if (answers.neuropathicSymptoms || answers.diabetesDiagnosis) {
-    signals.push('Questionnaire supports metabolic/neuropathic pattern')
+    signals.push('Questionnaire responses may be associated with metabolic/neuropathic pattern')
   }
   if (answers.painToday >= 7) signals.push('Patient-reported pain ≥ 7/10')
   if (answers.interference >= 7) signals.push('High functional interference reported')

@@ -1,3 +1,5 @@
+export type PriorOpioidExposure = 'none' | 'prior' | 'chronic'
+
 export type Patient = {
   id: string
   label: string
@@ -20,9 +22,20 @@ export type Patient = {
   vitaminD: number
   symptoms: string[]
   lastCheckIn: string
+  currentOpioidUse: boolean
+  mmePerDay: number
+  priorOpioidExposure: PriorOpioidExposure
+  opioidRiskScore: number
+  recommendedPathway: string
+  avoidOpioidReason: string
+  nextBestAction: string
 }
 
-export const patients: Patient[] = [
+/** Base clinical records — opioid intelligence fields filled by enrichPatient(). */
+export const patientRecords: Omit<
+  Patient,
+  'opioidRiskScore' | 'recommendedPathway' | 'avoidOpioidReason' | 'nextBestAction'
+>[] = [
   {
     id: 'patient-a',
     label: 'Patient A',
@@ -45,6 +58,9 @@ export const patients: Patient[] = [
     vitaminD: 32,
     symptoms: ['joint swelling', 'morning stiffness', 'localized warmth'],
     lastCheckIn: 'Today, 8:10 AM',
+    currentOpioidUse: true,
+    mmePerDay: 30,
+    priorOpioidExposure: 'prior',
   },
   {
     id: 'patient-b',
@@ -68,6 +84,9 @@ export const patients: Patient[] = [
     vitaminD: 28,
     symptoms: ['widespread pain', 'non-restorative sleep', 'fatigue'],
     lastCheckIn: 'Today, 7:30 AM',
+    currentOpioidUse: true,
+    mmePerDay: 45,
+    priorOpioidExposure: 'chronic',
   },
   {
     id: 'patient-c',
@@ -91,5 +110,8 @@ export const patients: Patient[] = [
     vitaminD: 12,
     symptoms: ['burning feet', 'numbness', 'tingling at night'],
     lastCheckIn: 'Yesterday, 9:20 PM',
+    currentOpioidUse: false,
+    mmePerDay: 0,
+    priorOpioidExposure: 'none',
   },
 ]

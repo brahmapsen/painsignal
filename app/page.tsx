@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ChevronDown, ClipboardList, Stethoscope } from 'lucide-react'
+import { ChevronDown, ClipboardList, Pill, ShieldAlert, Stethoscope } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Card } from '@/components/Card'
 import { RiskBadge } from '@/components/RiskBadge'
-import { patients } from '@/lib/data'
+import { patients } from '@/lib/patients'
 import {
   answersFromPatient,
   loadQuestionnaire,
@@ -18,16 +18,35 @@ import {
   type QuestionnaireAnswers,
 } from '@/lib/questionnaire'
 import {
+  CLINICAL_DISCLAIMER,
+  CLINICAL_CONTEXT_FOR_OPIOID_REVIEW,
+  CLINICAL_FACTORS_BULLETS,
+  CLINICAL_FACTORS_INTRO,
   explanation,
   keyMarkers,
+  opioidAnalysis,
   phenotype,
   phenotypeStyle,
   phenotypeSummary,
+  supportingEvidence,
   riskLevel,
   riskScore,
   type BiomarkerStatus,
+  type EvidenceTag,
 } from '@/lib/rules'
 import { contentWidthClass } from '@/lib/layout'
+
+function EvidenceTagChip({ tag }: { tag: EvidenceTag }) {
+  const cls =
+    tag === 'Possible contributor'
+      ? 'bg-amber-100 text-amber-900'
+      : tag === 'Signal present'
+        ? 'bg-sky-100 text-sky-900'
+        : tag === 'Needs clinician review'
+          ? 'bg-orange-100 text-orange-900'
+          : 'bg-slate-100 text-slate-700'
+  return <span className={`rounded-full px-2 py-0.5 text-xs ${cls}`}>{tag}</span>
+}
 
 function StatusChip({ status }: { status: BiomarkerStatus }) {
   const cls =
@@ -37,12 +56,12 @@ function StatusChip({ status }: { status: BiomarkerStatus }) {
         ? 'bg-amber-100 text-amber-900'
         : 'bg-emerald-100 text-emerald-800'
   const label = status === 'high' ? 'High' : status === 'low' ? 'Low' : 'Normal'
-  return <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
+  return <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{label}</span>
 }
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={<main className="px-5 py-5 text-sm font-medium text-slate-700">Loading dashboard…</main>}>
+    <Suspense fallback={<main className="px-5 py-5 text-sm text-slate-700">Loading dashboard…</main>}>
       <DashboardContent />
     </Suspense>
   )
@@ -56,6 +75,7 @@ function DashboardContent() {
   const [answers, setAnswers] = useState<QuestionnaireAnswers | null>(null)
 
   const patient = patients.find(p => p.id === selectedId) ?? patients[0]
+  const opioid = opioidAnalysis(patient)
   const baseScore = riskScore(patient)
   const adjustment = answers ? questionnaireRiskAdjustment(answers) : 0
   const score = answers ? mergedRiskScore(baseScore, answers) : baseScore
@@ -64,6 +84,7 @@ function DashboardContent() {
   const style = phenotypeStyle(type)
   const markers = keyMarkers(patient)
   const labReasons = explanation(patient)
+  const evidence = supportingEvidence(patient)
   const questionnaireReasons = answers ? questionnaireSignals(answers) : []
   const contributions = answers ? questionnaireContributions(answers) : []
 
@@ -86,17 +107,20 @@ function DashboardContent() {
       <section className={`${contentWidthClass} py-5`}>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Clinician phenotype dashboard</p>
+            <p className="text-xs font-normal uppercase tracking-wide text-sky-800">Clinician decision support</p>
             <h1 className="mt-0.5 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              Pain Management for Value-Based Care
+              Opioid Risk Intelligence Dashboard
             </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Organizes patient signals for clinician review — not a substitute for clinical judgment.
+            </p>
           </div>
           <label className="relative block w-full sm:w-64">
-            <span className="mb-1 block text-xs font-semibold text-slate-700">Select patient</span>
+            <span className="mb-1 block text-xs text-slate-600">Select patient</span>
             <select
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-400 bg-white py-2 pl-3 pr-9 text-sm font-semibold text-slate-950 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200"
+              className="w-full appearance-none rounded-lg border border-slate-400 bg-white py-2 pl-3 pr-9 text-sm font-normal text-slate-950 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200"
             >
               {patients.map(p => (
                 <option key={p.id} value={p.id}>
@@ -108,25 +132,44 @@ function DashboardContent() {
           </label>
         </div>
 
-        <div className={`rounded-lg border-2 p-4 sm:p-5 ${style.banner}`}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                <Stethoscope className="h-3.5 w-3.5" />
-                <span>Phenotype classification</span>
-              </div>
-              <h2 className="mt-1.5 text-2xl font-bold tracking-tight sm:text-3xl">{type}</h2>
-              <p className="mt-2 max-w-2xl text-sm font-medium leading-snug">{phenotypeSummary(patient)}</p>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Card className="border-2 border-orange-300 bg-orange-50">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-orange-900">
+              <Pill className="h-4 w-4" />
+              Opioid Escalation Risk
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-0.5">
-              <div className="flex items-center gap-2">
-                <RiskBadge level={level} />
-                <span className="text-xl font-bold">{score}/100</span>
-              </div>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <RiskBadge level={opioid.level} />
+              <span className="text-2xl font-semibold text-slate-950">{opioid.score}/100</span>
+              <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-700 ring-1 ring-orange-200">
+                {opioid.confidence}% confidence
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-slate-800">
+              <span className="font-semibold">Primary signal:</span> {opioid.primaryDriver}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-700">
+              <span>Current opioid use: {patient.currentOpioidUse ? 'Yes' : 'No'}</span>
+              <span>MME/day: {patient.mmePerDay}</span>
+              <span>Prior exposure: {patient.priorOpioidExposure}</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-800">
+              <span className="font-semibold">For clinician review:</span> {patient.nextBestAction}
+            </p>
+          </Card>
+
+          <div className={`rounded-lg border-2 p-4 ${style.banner}`}>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
+              <Stethoscope className="h-3.5 w-3.5" />
+              <span>Signal pattern classification</span>
+            </div>
+            <h2 className="mt-1.5 text-xl font-bold tracking-tight sm:text-2xl">{type}</h2>
+            <p className="mt-1.5 text-sm leading-snug">{phenotypeSummary(patient)}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <RiskBadge level={level} />
+              <span className="text-sm text-slate-800">Composite signal score {score}/100</span>
               {adjustment > 0 && (
-                <span className="text-xs font-medium text-slate-800">
-                  {baseScore} base + {adjustment} questionnaire
-                </span>
+                <span className="text-xs text-slate-600">(+{adjustment} questionnaire)</span>
               )}
             </div>
           </div>
@@ -135,15 +178,67 @@ function DashboardContent() {
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {markers.map(m => (
             <Card key={m.label} className="text-center">
-              <div className="text-xs font-semibold text-slate-700">{m.label}</div>
-              <div className="mt-1 text-xl font-bold text-slate-950">{m.value}</div>
+              <div className="text-xs text-slate-600">{m.label}</div>
+              <div className="mt-1 text-xl font-semibold text-slate-950">{m.value}</div>
               <div className="mt-2 flex items-center justify-center gap-2">
                 <StatusChip status={m.status} />
-                <span className="text-xs font-medium text-slate-600">{m.note}</span>
+                <span className="text-xs text-slate-500">{m.note}</span>
               </div>
             </Card>
           ))}
         </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <Card>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-700">Clinical Factors for Review</h3>
+            <p className="mt-1.5 text-sm text-slate-800">{CLINICAL_FACTORS_INTRO}</p>
+            <ul className="mt-2 space-y-1">
+              {CLINICAL_FACTORS_BULLETS.map(step => (
+                <li key={step} className="flex items-start gap-2 text-sm text-slate-800">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-700" />
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          <Card className="border-amber-200 bg-amber-50">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-amber-900" />
+              <h3 className="text-xs font-bold uppercase tracking-wide text-amber-950">Clinical Context for Opioid Review</h3>
+            </div>
+            <p className="mt-2 text-sm leading-snug text-slate-800">{CLINICAL_CONTEXT_FOR_OPIOID_REVIEW}</p>
+          </Card>
+        </div>
+
+        <Card className="mt-4">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-slate-700">Supporting Evidence</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Patient-specific data points organized for clinician interpretation.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-100 text-xs text-slate-700">
+                <tr>
+                  <th className="px-3 py-1.5">Measure</th>
+                  <th className="px-3 py-1.5">Value</th>
+                  <th className="px-3 py-1.5">Review label</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evidence.map(item => (
+                  <tr key={item.label} className="border-t border-slate-200">
+                    <td className="px-3 py-2 text-slate-800">{item.label}</td>
+                    <td className="px-3 py-2 font-semibold text-slate-950">{item.value}</td>
+                    <td className="px-3 py-2">
+                      <EvidenceTagChip tag={item.tag} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
 
         <Card className="mt-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -151,47 +246,47 @@ function DashboardContent() {
               <ClipboardList className="h-4 w-4 text-sky-800" />
               <h3 className="text-base font-bold text-slate-950">Questionnaire inputs</h3>
             </div>
-            <Link href={`/questionnaire?patient=${selectedId}`} className="text-sm font-semibold text-sky-800 hover:underline">
+            <Link href={`/questionnaire?patient=${selectedId}`} className="text-sm text-sky-800 hover:underline">
               Edit questionnaire →
             </Link>
           </div>
-          <p className="mt-1.5 text-sm font-medium text-slate-800">
-            Patient-reported answers from the clinical visit are merged with objective labs and wearables below.
+          <p className="mt-1.5 text-sm text-slate-700">
+            Patient-reported responses merged with labs, wearables, and opioid history for clinician review.
           </p>
 
           {contributions.length > 0 ? (
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-100 text-xs font-semibold text-slate-800">
+                <thead className="bg-slate-100 text-xs text-slate-700">
                   <tr>
                     <th className="px-3 py-1.5">Questionnaire answer</th>
                     <th className="px-3 py-1.5">Factors into</th>
-                    <th className="px-3 py-1.5">Impact on analysis</th>
+                    <th className="px-3 py-1.5">Contribution to index</th>
                   </tr>
                 </thead>
                 <tbody>
                   {contributions.map(row => (
                     <tr key={row.question} className="border-t border-slate-200">
-                      <td className="px-3 py-2 font-medium text-slate-950">
-                        <span className="font-bold">{row.question}:</span> {row.answer}
+                      <td className="px-3 py-2 text-slate-800">
+                        <span className="font-semibold">{row.question}:</span> {row.answer}
                       </td>
-                      <td className="px-3 py-2 font-medium text-slate-800">{row.affects}</td>
-                      <td className="px-3 py-2 font-semibold text-sky-900">{row.impact}</td>
+                      <td className="px-3 py-2 text-slate-700">{row.affects}</td>
+                      <td className="px-3 py-2 text-sky-900">{row.impact}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="mt-3 text-sm font-medium text-slate-700">No questionnaire flags recorded for this patient.</p>
+            <p className="mt-3 text-sm text-slate-600">No questionnaire flags recorded for this patient.</p>
           )}
 
           {questionnaireReasons.length > 0 && (
             <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5">
-              <p className="text-xs font-bold uppercase tracking-wide text-sky-900">Questionnaire confirms</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-sky-900">Questionnaire signals for review</p>
               <ul className="mt-1.5 space-y-0.5">
                 {questionnaireReasons.map(r => (
-                  <li key={r} className="text-sm font-medium text-slate-900">
+                  <li key={r} className="text-sm text-slate-800">
                     • {r}
                   </li>
                 ))}
@@ -206,8 +301,8 @@ function DashboardContent() {
             <p className="mt-1.5 text-base font-bold text-slate-950">
               {patient.label}: {patient.name}, {patient.age}y
             </p>
-            <p className="mt-0.5 text-sm font-medium text-slate-800">{patient.pathway}</p>
-            <p className="mt-0.5 text-xs font-medium text-slate-600">Last check-in: {patient.lastCheckIn}</p>
+            <p className="mt-0.5 text-sm text-slate-700">{patient.pathway}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Last check-in: {patient.lastCheckIn}</p>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {patient.symptoms.map(s => (
                 <span key={s} className={`rounded-full border px-2.5 py-0.5 text-xs ${style.chip}`}>
@@ -218,55 +313,47 @@ function DashboardContent() {
           </Card>
 
           <Card>
-            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-700">Why this phenotype</h3>
-            <p className="mt-1 text-xs font-semibold text-slate-600">Labs & wearables</p>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-700">Signal summary</h3>
+            <p className="mt-1 text-xs text-slate-500">Labs & wearables — for clinician correlation</p>
             <ul className="mt-1.5 space-y-1">
               {labReasons.map(r => (
-                <li key={r} className="flex items-start gap-2 text-sm font-medium text-slate-900">
+                <li key={r} className="flex items-start gap-2 text-sm text-slate-800">
                   <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${style.accent.replace('text-', 'bg-')}`} />
                   {r}
                 </li>
               ))}
             </ul>
-            {questionnaireReasons.length > 0 && (
-              <>
-                <p className="mt-3 text-xs font-semibold text-slate-600">Questionnaire</p>
-                <ul className="mt-1.5 space-y-1">
-                  {questionnaireReasons.map(r => (
-                    <li key={`q-${r}`} className="flex items-start gap-2 text-sm font-medium text-slate-900">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-700" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
           </Card>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <Card>
-            <div className="text-xs font-semibold text-slate-700">Pain today (PRO)</div>
-            <div className="mt-0.5 text-lg font-bold">{answers?.painToday ?? patient.painScore}/10</div>
+            <div className="text-xs text-slate-600">Pain today (PRO)</div>
+            <div className="mt-0.5 text-lg font-semibold">{answers?.painToday ?? patient.painScore}/10</div>
           </Card>
           <Card>
-            <div className="text-xs font-semibold text-slate-700">Sleep efficiency</div>
-            <div className="mt-0.5 text-lg font-bold">{patient.sleepEfficiency}%</div>
+            <div className="text-xs text-slate-600">Sleep efficiency</div>
+            <div className="mt-0.5 text-lg font-semibold">{patient.sleepEfficiency}%</div>
           </Card>
           <Card>
-            <div className="text-xs font-semibold text-slate-700">Steps (24h)</div>
-            <div className="mt-0.5 text-lg font-bold">{patient.steps.toLocaleString()}</div>
+            <div className="text-xs text-slate-600">Steps (24h)</div>
+            <div className="mt-0.5 text-lg font-semibold">{patient.steps.toLocaleString()}</div>
           </Card>
           <Card>
-            <div className="text-xs font-semibold text-slate-700">Function interference (PRO)</div>
-            <div className="mt-0.5 text-lg font-bold">{answers?.interference ?? patient.bpiInterference}/10</div>
+            <div className="text-xs text-slate-600">Function interference (PRO)</div>
+            <div className="mt-0.5 text-lg font-semibold">{answers?.interference ?? patient.bpiInterference}/10</div>
           </Card>
         </div>
 
-        <p className="mt-4 text-center text-xs font-medium text-slate-600">
-          Workflow support only — not autonomous diagnosis.{' '}
-          <Link href={`/patients/${patient.id}`} className="font-semibold text-sky-800 hover:underline">
+        <p className="mt-4 text-center text-xs text-slate-500">
+          {CLINICAL_DISCLAIMER}
+          {' · '}
+          <Link href={`/patients/${patient.id}`} className="text-sky-800 hover:underline">
             View full record →
+          </Link>
+          {' · '}
+          <Link href="/patients" className="text-sky-800 hover:underline">
+            Population view →
           </Link>
         </p>
       </section>

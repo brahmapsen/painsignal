@@ -8,12 +8,15 @@ export function Header() {
         <Link href="/" className="text-lg font-bold text-sky-950">
           PainSignal
         </Link>
-        <nav className="flex gap-4 text-sm font-medium text-slate-800">
+        <nav className="flex gap-4 text-sm font-normal text-slate-800">
           <Link href="/" className="hover:text-sky-900">
-            Clinician Dashboard
+            Opioid Risk Dashboard
+          </Link>
+          <Link href="/patients" className="hover:text-sky-900">
+            Population
           </Link>
           <Link href="/questionnaire" className="hover:text-sky-900">
-            Clinical Questionnaire
+            Questionnaire
           </Link>
           <Link href="/patient-checkin" className="hover:text-sky-900">
             Patient Check-in
