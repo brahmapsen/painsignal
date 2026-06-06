@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Card } from '@/components/Card'
 import { RiskBadge } from '@/components/RiskBadge'
+import { StructuralContextCard } from '@/components/StructuralContextCard'
 import { patients } from '@/lib/patients'
 import {
   CLINICAL_CONTEXT_FOR_OPIOID_REVIEW,
@@ -153,6 +154,10 @@ export default function PatientDetail({ params }: { params: { id: string } }) {
             </table>
           </div>
         </Card>
+
+        <div className="mt-4">
+          <StructuralContextCard patient={p} />
+        </div>
 
         <Card className="mt-4">
           <div className="text-xs text-slate-600">Laboratory markers</div>

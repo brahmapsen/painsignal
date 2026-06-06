@@ -1,5 +1,17 @@
 export type PriorOpioidExposure = 'none' | 'prior' | 'chronic'
 
+export type StructuralContribution = 'Low' | 'Moderate' | 'High'
+
+export type PatientImaging = {
+  modality: string
+  bodyRegion: string
+  reportDate: string
+  summary: string
+  findings: string[]
+  structuralContribution: StructuralContribution
+  correlationNote: string
+}
+
 export type Patient = {
   id: string
   label: string
@@ -29,6 +41,7 @@ export type Patient = {
   recommendedPathway: string
   avoidOpioidReason: string
   nextBestAction: string
+  imaging?: PatientImaging
 }
 
 /** Base clinical records — opioid intelligence fields filled by enrichPatient(). */
@@ -61,6 +74,20 @@ export const patientRecords: Omit<
     currentOpioidUse: true,
     mmePerDay: 30,
     priorOpioidExposure: 'prior',
+    imaging: {
+      modality: 'MRI',
+      bodyRegion: 'Lumbar spine',
+      reportDate: '2025-11-12',
+      summary: 'Mild degenerative disc changes without clear nerve root compression.',
+      findings: [
+        'Mild L4-L5 disc bulge',
+        'No severe canal stenosis',
+        'No acute fracture',
+      ],
+      structuralContribution: 'Low',
+      correlationNote:
+        'Structural findings appear limited relative to inflammatory markers and patient-reported symptoms. Clinical correlation recommended.',
+    },
   },
   {
     id: 'patient-b',
@@ -87,6 +114,20 @@ export const patientRecords: Omit<
     currentOpioidUse: true,
     mmePerDay: 45,
     priorOpioidExposure: 'chronic',
+    imaging: {
+      modality: 'MRI',
+      bodyRegion: 'Lumbar spine',
+      reportDate: '2025-10-28',
+      summary: 'Multilevel degenerative changes common in chronic back pain populations.',
+      findings: [
+        'Moderate degenerative disc disease',
+        'Facet arthropathy',
+        'No acute inflammatory lesion noted in report',
+      ],
+      structuralContribution: 'Moderate',
+      correlationNote:
+        'Imaging may explain some mechanical symptoms, but sleep disruption, low HRV, and widespread symptoms suggest non-structural contributors may also be relevant.',
+    },
   },
   {
     id: 'patient-c',
@@ -113,5 +154,19 @@ export const patientRecords: Omit<
     currentOpioidUse: false,
     mmePerDay: 0,
     priorOpioidExposure: 'none',
+    imaging: {
+      modality: 'X-ray',
+      bodyRegion: 'Foot/ankle',
+      reportDate: '2025-12-03',
+      summary: 'No acute osseous abnormality.',
+      findings: [
+        'No acute fracture',
+        'Mild degenerative change',
+        'No focal destructive lesion',
+      ],
+      structuralContribution: 'Low',
+      correlationNote:
+        'Imaging does not appear to fully explain burning, numbness, and tingling symptoms. Metabolic and neuropathic signals may warrant review.',
+    },
   },
 ]

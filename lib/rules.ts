@@ -273,6 +273,27 @@ export function supportingEvidence(p: Patient): SupportingEvidenceItem[] {
   ]
 }
 
+export const NO_IMAGING_CONTEXT_MESSAGE =
+  'No imaging context available. PainSignal can still synthesize biomarkers, wearable trends, and patient-reported outcomes.'
+
+export function structuralContextSummary(p: Patient): string {
+  if (!p.imaging) {
+    return NO_IMAGING_CONTEXT_MESSAGE
+  }
+
+  const { structuralContribution } = p.imaging
+
+  if (structuralContribution === 'Low') {
+    return 'Current imaging summary does not appear to fully explain the overall symptom pattern. Structural findings may be a secondary contributor. Imaging findings should be interpreted alongside biomarkers, wearables, and patient-reported outcomes.'
+  }
+
+  if (structuralContribution === 'Moderate') {
+    return 'Reported imaging findings may contribute to some mechanical symptoms. Current imaging summary may not fully explain the overall symptom pattern. Imaging findings should be interpreted alongside biomarkers, wearables, and patient-reported outcomes.'
+  }
+
+  return 'Reported imaging findings may be a more prominent structural context layer. Imaging findings should still be interpreted alongside biomarkers, wearables, and patient-reported outcomes — clinical correlation recommended.'
+}
+
 export function enrichPatient(
   p: Omit<Patient, 'opioidRiskScore' | 'recommendedPathway' | 'avoidOpioidReason' | 'nextBestAction'>,
 ): Patient {

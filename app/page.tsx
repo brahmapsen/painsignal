@@ -7,6 +7,7 @@ import { ChevronDown, ClipboardList, Pill, ShieldAlert, Stethoscope } from 'luci
 import { Header } from '@/components/Header'
 import { Card } from '@/components/Card'
 import { RiskBadge } from '@/components/RiskBadge'
+import { StructuralContextCard } from '@/components/StructuralContextCard'
 import { patients } from '@/lib/patients'
 import {
   answersFromPatient,
@@ -343,6 +344,10 @@ function DashboardContent() {
             <div className="text-xs text-slate-600">Function interference (PRO)</div>
             <div className="mt-0.5 text-lg font-semibold">{answers?.interference ?? patient.bpiInterference}/10</div>
           </Card>
+        </div>
+
+        <div className="mt-4">
+          <StructuralContextCard patient={patient} />
         </div>
 
         <p className="mt-4 text-center text-xs text-slate-500">
